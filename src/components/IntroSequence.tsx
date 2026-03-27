@@ -10,6 +10,7 @@ export default function IntroSequence({ onComplete }: Props) {
   const [phase, setPhase] = useState(0);
 
   useEffect(() => {
+    // phase 6(진입 버튼)까지만 자동 진행, 이후는 클릭으로
     const timers = [
       setTimeout(() => setPhase(1), 1000),
       setTimeout(() => setPhase(2), 3500),
@@ -17,10 +18,9 @@ export default function IntroSequence({ onComplete }: Props) {
       setTimeout(() => setPhase(4), 12000),
       setTimeout(() => setPhase(5), 17000),
       setTimeout(() => setPhase(6), 22000),
-      setTimeout(() => onComplete(), 26000),
     ];
     return () => timers.forEach(clearTimeout);
-  }, [onComplete]);
+  }, []);
 
   return (
     <div className="fixed inset-0 z-40 flex items-center justify-center bg-black">
@@ -63,16 +63,28 @@ export default function IntroSequence({ onComplete }: Props) {
             </div>
           )}
 
-          {/* 3: 진입 */}
+          {/* 3: 클릭으로 진입 (사용자 인터랙션 → 오디오 활성화) */}
           {phase >= 6 && (
             <div className="animate-fade-in-slow space-y-6">
               <div className="w-12 h-px bg-white/20 mx-auto" />
-              <p className="text-white/30 text-xs tracking-wider">
-                안경을 쓰고 사고 공간에 진입합니다...
-              </p>
-              <div className="flex justify-center">
-                <div className="w-8 h-8 border-2 border-white/10 rounded-full animate-ping" />
-              </div>
+              <button
+                onClick={onComplete}
+                className="group cursor-pointer bg-transparent border-none outline-none"
+              >
+                <p className="text-white/40 text-xs tracking-wider group-hover:text-white/70 transition-colors duration-500">
+                  안경을 쓰고 사고 공간에 진입합니다
+                </p>
+                <div className="flex justify-center mt-6">
+                  <div className="w-10 h-10 border border-white/15 rounded-full flex items-center justify-center group-hover:border-amber-400/40 transition-all duration-500">
+                    <span className="text-white/30 text-lg group-hover:text-amber-400/60 transition-colors duration-500">
+                      ▶
+                    </span>
+                  </div>
+                </div>
+                <p className="text-white/20 text-[10px] tracking-widest mt-4 group-hover:text-white/40 transition-colors duration-500">
+                  CLICK TO ENTER
+                </p>
+              </button>
             </div>
           )}
         </div>
