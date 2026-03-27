@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useCallback } from "react";
+import { useState, useCallback, useRef, useEffect } from "react";
 import { GameState, ChatMessage } from "@/lib/types";
 import {
   createInitialState,
@@ -11,6 +11,7 @@ import {
   calculateCollapseProgress,
   countActiveSages,
 } from "@/lib/engine";
+import { AmbientEngine } from "@/lib/audio";
 import WorldBackground from "./WorldBackground";
 import StatusBar from "./StatusBar";
 import ChatInterface from "./ChatInterface";
@@ -55,9 +56,35 @@ export default function GameEngine() {
   const [showIntro, setShowIntro] = useState(true);
   const [showCollapse, setShowCollapse] = useState(false);
   const [inputDisabled, setInputDisabled] = useState(false);
+  const [audioStarted, setAudioStarted] = useState(false);
+  const audioRef = useRef<AmbientEngine | null>(null);
 
-  // 인트로 완료 → 깨어난 자의 첫 메시지들
+  // 오디오 엔진 초기화 (사용자 인터랙션 후)
+  const startAudio = useCallback(() => {
+    if (audioStarted) return;
+    const engine = new AmbientEngine();
+    engine.start();
+    audioRef.current = engine;
+    setAudioStarted(true);
+  }, [audioStarted]);
+
+  // 세계 상태 변경 시 오디오 전환
+  useEffect(() => {
+    if (audioRef.current) {
+      audioRef.current.transition(gameState.worldState);
+    }
+  }, [gameState.worldState]);
+
+  // 컴포넌트 언마운트 시 오디오 정리
+  useEffect(() => {
+    return () => {
+      audioRef.current?.stop();
+    };
+  }, []);
+
+  // 인트로 완료 → 깨어난 자의 첫 메시지들 + 오디오 시작
   const handleIntroComplete = useCallback(() => {
+    startAudio();
     setShowIntro(false);
     const introMessages = getIntroMessages();
 
@@ -73,7 +100,7 @@ export default function GameEngine() {
         }));
       }, delay);
     });
-  }, []);
+  }, [startAudio]);
 
   // 플레이어 입력 처리 (Claude API 연동)
   const handleSend = useCallback(
@@ -146,14 +173,18 @@ export default function GameEngine() {
     [gameState, inputDisabled]
   );
 
-  // 붕괴 완료
+  // 붕괴 완료 → 오디오 정지
   const handleCollapseComplete = useCallback(() => {
+    audioRef.current?.stop();
     setShowCollapse(false);
     setGameState((prev) => ({ ...prev, phase: "post" }));
   }, []);
 
-  // 재시작
+  // 재시작 → 오디오 리셋
   const handleRestart = useCallback(() => {
+    audioRef.current?.stop();
+    audioRef.current = null;
+    setAudioStarted(false);
     setGameState(createInitialState());
     setShowIntro(true);
     setShowCollapse(false);
