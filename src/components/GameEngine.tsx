@@ -1,11 +1,15 @@
 "use client";
 
-import { useState, useCallback, useEffect } from "react";
-import { GameState } from "@/lib/types";
+import { useState, useCallback } from "react";
+import { GameState, ChatMessage } from "@/lib/types";
 import {
   createInitialState,
   getIntroMessages,
-  processPlayerInput,
+  analyzeInput,
+  accumulate,
+  calculateWorldState,
+  calculateCollapseProgress,
+  countActiveSages,
 } from "@/lib/engine";
 import WorldBackground from "./WorldBackground";
 import StatusBar from "./StatusBar";
@@ -13,6 +17,38 @@ import ChatInterface from "./ChatInterface";
 import IntroSequence from "./IntroSequence";
 import CollapseSequence from "./CollapseSequence";
 import PostCollapse from "./PostCollapse";
+
+async function fetchAIResponse(
+  message: string,
+  history: { role: "player" | "awakened"; text: string }[],
+  state: GameState
+): Promise<string> {
+  try {
+    const res = await fetch("/api/chat", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        message,
+        history: history.map((m) => ({ role: m.role, text: m.text })),
+        activation: state.activation,
+        worldState: state.worldState,
+        turnCount: state.turnCount,
+        collapseProgress: state.collapseProgress,
+      }),
+    });
+
+    if (!res.ok) {
+      throw new Error(`API error: ${res.status}`);
+    }
+
+    const data = await res.json();
+    return data.text;
+  } catch (error) {
+    console.error("AI response error:", error);
+    // 폴백: API 실패 시 기본 응답
+    return "…\n\n연결이 흔들린다.\n\n다시 물어봐.";
+  }
+}
 
 export default function GameEngine() {
   const [gameState, setGameState] = useState<GameState>(createInitialState());
@@ -27,8 +63,8 @@ export default function GameEngine() {
 
     // 메시지를 순차적으로 표시
     let delay = 0;
-    introMessages.forEach((msg, i) => {
-      delay += 1500 + (msg.text.length * 30); // 텍스트 길이에 따라 딜레이
+    introMessages.forEach((msg) => {
+      delay += 1500 + msg.text.length * 30;
       setTimeout(() => {
         setGameState((prev) => ({
           ...prev,
@@ -39,35 +75,75 @@ export default function GameEngine() {
     });
   }, []);
 
-  // 플레이어 입력 처리
+  // 플레이어 입력 처리 (Claude API 연동)
   const handleSend = useCallback(
-    (text: string) => {
+    async (text: string) => {
       if (gameState.phase !== "playing" || inputDisabled) return;
 
       setInputDisabled(true);
 
-      // 플레이어 메시지 즉시 표시
+      // 1. 키워드 분석 → 현자 활성화 (클라이언트에서 처리)
+      const activation = analyzeInput(text);
+      const newAcc = accumulate(gameState.activation, activation);
+      const worldState = calculateWorldState(newAcc);
+      const collapseProgress = calculateCollapseProgress(newAcc);
+      const activeSages = countActiveSages(newAcc);
+
+      // 어떤 현자가 반응했는지
+      const influence: ("sage1" | "sage2" | "sage3")[] = [];
+      if (activation.sage1 > 0) influence.push("sage1");
+      if (activation.sage2 > 0) influence.push("sage2");
+      if (activation.sage3 > 0) influence.push("sage3");
+
+      // 2. 플레이어 메시지 즉시 표시
+      const playerMsg: ChatMessage = { role: "player", text };
       setGameState((prev) => ({
         ...prev,
-        messages: [...prev.messages, { role: "player", text }],
+        messages: [...prev.messages, playerMsg],
       }));
 
-      // 깨어난 자의 응답 (딜레이)
-      setTimeout(() => {
-        setGameState((prev) => {
-          const newState = processPlayerInput(text, prev);
+      // 3. Claude API로 응답 생성
+      const stateForAPI: GameState = {
+        ...gameState,
+        activation: newAcc,
+        worldState,
+        collapseProgress,
+        turnCount: gameState.turnCount + 1,
+      };
 
-          // 붕괴 체크
-          if (newState.phase === "collapse") {
-            setTimeout(() => setShowCollapse(true), 1000);
-          }
+      const aiText = await fetchAIResponse(
+        text,
+        gameState.messages,
+        stateForAPI
+      );
 
-          return newState;
-        });
-        setInputDisabled(false);
-      }, 1200 + Math.random() * 800);
+      // 4. 깨어난 자 응답 + 상태 업데이트
+      const awakenedMsg: ChatMessage = {
+        role: "awakened",
+        text: aiText,
+        sageInfluence: influence.length > 0 ? influence : undefined,
+      };
+
+      const isCollapse = worldState === "collapse";
+
+      setGameState((prev) => ({
+        ...prev,
+        phase: isCollapse ? "collapse" : prev.phase,
+        activation: newAcc,
+        worldState,
+        turnCount: prev.turnCount + 1,
+        messages: [...prev.messages, awakenedMsg],
+        collapseProgress,
+        activeSages,
+      }));
+
+      if (isCollapse) {
+        setTimeout(() => setShowCollapse(true), 1000);
+      }
+
+      setInputDisabled(false);
     },
-    [gameState.phase, inputDisabled]
+    [gameState, inputDisabled]
   );
 
   // 붕괴 완료
