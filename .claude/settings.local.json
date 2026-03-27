@@ -2,7 +2,14 @@
   "permissions": {
     "allow": [
       "Bash(npm -v)",
-      "Bash(npm run:*)"
+      "Bash(npm run:*)",
+      "WebSearch",
+      "WebFetch(domain:www.npmjs.com)",
+      "WebFetch(domain:ai.google.dev)",
+      "WebFetch(domain:medium.com)",
+      "Bash(npm install:*)",
+      "Bash(npm uninstall:*)",
+      "Bash(npx next:*)"
     ]
   }
 }
