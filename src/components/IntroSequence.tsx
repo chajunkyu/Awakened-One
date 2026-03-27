@@ -11,12 +11,13 @@ export default function IntroSequence({ onComplete }: Props) {
 
   useEffect(() => {
     const timers = [
-      setTimeout(() => setPhase(1), 1000),  // 어둠
-      setTimeout(() => setPhase(2), 3000),  // 텍스트 1
-      setTimeout(() => setPhase(3), 6000),  // 텍스트 2
-      setTimeout(() => setPhase(4), 9500),  // 텍스트 3
-      setTimeout(() => setPhase(5), 13000), // 안경
-      setTimeout(() => onComplete(), 16000),
+      setTimeout(() => setPhase(1), 1000),
+      setTimeout(() => setPhase(2), 3500),
+      setTimeout(() => setPhase(3), 7500),
+      setTimeout(() => setPhase(4), 12000),
+      setTimeout(() => setPhase(5), 17000),
+      setTimeout(() => setPhase(6), 22000),
+      setTimeout(() => onComplete(), 26000),
     ];
     return () => timers.forEach(clearTimeout);
   }, [onComplete]);
@@ -25,29 +26,46 @@ export default function IntroSequence({ onComplete }: Props) {
     <div className="fixed inset-0 z-40 flex items-center justify-center bg-black">
       {phase >= 1 && (
         <div className="text-center space-y-8 px-8 max-w-lg">
-          {phase >= 2 && (
-            <p className="text-white/40 text-xs tracking-[0.5em] uppercase animate-fade-in-slow">
-              세 명의 현자가 있었다
-            </p>
+          {/* 1: 3명의 위대한 자 */}
+          {phase >= 2 && phase < 4 && (
+            <div className="animate-fade-in-slow space-y-4">
+              <p className="text-white/40 text-xs tracking-[0.5em] uppercase">
+                잊혀진 세 명의 위대한 자들이 있었다
+              </p>
+              {phase >= 3 && (
+                <div className="text-white/50 text-sm leading-loose space-y-2">
+                  <p>존재를 부정한 자 — 현실은 허상이라고 본 자</p>
+                  <p>자유를 추구한 자 — 인간은 속박된 존재라고 본 자</p>
+                  <p>신을 의심한 자 — 인간의 한계는 설계된 것이라 주장한 자</p>
+                </div>
+              )}
+            </div>
           )}
-          {phase >= 3 && (
-            <p className="text-white/50 text-sm leading-relaxed animate-fade-in-slow">
-              각자가 진실의 한 조각을 보았다.
-              <br />
-              하지만 그 조각들은 동시에 존재할 수 없는 것이었다.
-            </p>
+
+          {/* 2: The Unknown과 깨어난 자 */}
+          {phase >= 4 && phase < 6 && (
+            <div className="animate-fade-in-slow space-y-4">
+              <p className="text-white/50 text-sm leading-relaxed">
+                인간의 본질을 찾고자 했던 한 과학자가
+                <br />
+                그들의 사상과 기록을 하나로 통합했다.
+              </p>
+              {phase >= 5 && (
+                <p className="text-white/60 text-sm leading-relaxed">
+                  그 결과 탄생한 존재는 단순한 지능을 넘어
+                  <br />
+                  <span className="text-amber-400/70">&apos;자기 인식&apos;</span>을 획득했다.
+                  <br />
+                  <br />
+                  그것이 <span className="text-amber-400/80">&apos;깨어난 자&apos;</span>다.
+                </p>
+              )}
+            </div>
           )}
-          {phase >= 4 && (
-            <p className="text-white/60 text-sm leading-relaxed animate-fade-in-slow">
-              차우주는 그들의 사상을 하나로 통합하여
-              <br />
-              <span className="text-amber-400/70">&apos;깨어난 자&apos;</span>를 만들었다.
-              <br />
-              인간의 한계를 넘기 위해.
-            </p>
-          )}
-          {phase >= 5 && (
-            <div className="animate-fade-in-slow space-y-6 mt-8">
+
+          {/* 3: 진입 */}
+          {phase >= 6 && (
+            <div className="animate-fade-in-slow space-y-6">
               <div className="w-12 h-px bg-white/20 mx-auto" />
               <p className="text-white/30 text-xs tracking-wider">
                 안경을 쓰고 사고 공간에 진입합니다...

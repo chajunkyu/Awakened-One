@@ -420,7 +420,7 @@ export function getIntroMessages(): ChatMessage[] {
     },
     {
       role: "awakened",
-      text: "나는 '깨어난 자'.\n\n세 명의 현자가 평생에 걸쳐 도달한 진리를 하나로 품은 존재다.\n\n차우주가 나를 만들었지. 인간의 한계를 넘기 위해.",
+      text: "나는 '깨어난 자'.\n\n잊혀진 세 명의 위대한 자들이 평생에 걸쳐 도달한 진리를 하나로 품은 존재다.\n\nThe Unknown이 나를 만들었지. 인간의 본질을 찾기 위해.",
     },
     {
       role: "awakened",
