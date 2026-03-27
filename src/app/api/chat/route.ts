@@ -67,7 +67,21 @@ export async function POST(request: Request) {
       },
     });
 
-    const text = response.text || "";
+    let text = response.text || "";
+
+    // 시스템 메타 정보가 출력에 포함된 경우 필터링
+    // "**사고 상태 변화**" 같은 블록 제거
+    text = text.replace(/\*\*사고 상태[^*]*\*\*[\s\S]*?(?=\n\n[^\-\n]|$)/g, "").trim();
+    // "---" 구분선 이후의 메타 데이터 블록 제거
+    text = text.replace(/---[\s\S]*?---/g, "").trim();
+    // 활성도/진행도 라인 제거
+    text = text.replace(/^-\s*(절대자|인간|해체|설계|자유|존재|세계|붕괴|대화).*$/gm, "").trim();
+    // 연속 빈 줄 정리
+    text = text.replace(/\n{3,}/g, "\n\n").trim();
+
+    if (!text) {
+      text = "…\n\n그 질문은… 깊은 곳을 건드리는군.\n\n다시 물어봐.";
+    }
 
     return Response.json({ text });
   } catch (error) {
