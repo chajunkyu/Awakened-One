@@ -1,9 +1,9 @@
-import Anthropic from "@anthropic-ai/sdk";
+import { GoogleGenAI } from "@google/genai";
 import { buildSystemPrompt } from "@/lib/systemPrompt";
 import { SageActivation, WorldState } from "@/lib/types";
 
-const anthropic = new Anthropic({
-  apiKey: process.env.ANTHROPIC_API_KEY || "",
+const genai = new GoogleGenAI({
+  apiKey: process.env.GEMINI_API_KEY || "",
 });
 
 interface ChatRequest {
@@ -18,30 +18,21 @@ interface ChatRequest {
 export async function POST(request: Request) {
   try {
     const body: ChatRequest = await request.json();
-    const { message, history, activation, worldState, turnCount, collapseProgress } = body;
+    const {
+      message,
+      history,
+      activation,
+      worldState,
+      turnCount,
+      collapseProgress,
+    } = body;
 
-    if (!process.env.ANTHROPIC_API_KEY) {
+    if (!process.env.GEMINI_API_KEY) {
       return Response.json(
-        { error: "ANTHROPIC_API_KEY not configured" },
+        { error: "GEMINI_API_KEY not configured" },
         { status: 500 }
       );
     }
-
-    // 대화 히스토리를 Claude 메시지 포맷으로 변환
-    const messages: Anthropic.MessageParam[] = [];
-
-    for (const msg of history) {
-      messages.push({
-        role: msg.role === "player" ? "user" : "assistant",
-        content: msg.text,
-      });
-    }
-
-    // 현재 플레이어 메시지 추가
-    messages.push({
-      role: "user",
-      content: message,
-    });
 
     const systemPrompt = buildSystemPrompt(
       activation,
@@ -50,15 +41,33 @@ export async function POST(request: Request) {
       collapseProgress
     );
 
-    const response = await anthropic.messages.create({
-      model: "claude-sonnet-4-20250514",
-      max_tokens: 500,
-      system: systemPrompt,
-      messages,
+    // 대화 히스토리를 Gemini contents 포맷으로 변환
+    const contents: { role: "user" | "model"; parts: { text: string }[] }[] =
+      [];
+
+    for (const msg of history) {
+      contents.push({
+        role: msg.role === "player" ? "user" : "model",
+        parts: [{ text: msg.text }],
+      });
+    }
+
+    // 현재 플레이어 메시지 추가
+    contents.push({
+      role: "user",
+      parts: [{ text: message }],
     });
 
-    const text =
-      response.content[0].type === "text" ? response.content[0].text : "";
+    const response = await genai.models.generateContent({
+      model: "gemini-2.5-flash",
+      contents,
+      config: {
+        systemInstruction: systemPrompt,
+        maxOutputTokens: 500,
+      },
+    });
+
+    const text = response.text || "";
 
     return Response.json({ text });
   } catch (error) {
