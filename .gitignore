@@ -33,6 +33,9 @@ yarn-error.log*
 # env files (can opt-in for committing if needed)
 .env*
 
+# push script (contains token logic)
+push.bat
+
 # vercel
 .vercel
 
