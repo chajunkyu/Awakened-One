@@ -222,6 +222,11 @@ export class AmbientEngine {
     this.ctx = new AudioContext();
     const ctx = this.ctx;
 
+    // 브라우저 정책: suspended 상태면 resume
+    if (ctx.state === "suspended") {
+      await ctx.resume();
+    }
+
     // 마스터 게인
     const masterGain = ctx.createGain();
     masterGain.gain.value = 0;
@@ -330,11 +335,11 @@ export class AmbientEngine {
       filter, distortion, reverb,
     };
 
-    // 페이드인
-    masterGain.gain.setTargetAtTime(
+    // 페이드인 (0.5초 후 시작, 1.5초에 걸쳐 — 더 빠르게 들리도록)
+    masterGain.gain.setValueAtTime(0, ctx.currentTime);
+    masterGain.gain.linearRampToValueAtTime(
       STATE_CONFIGS.calm.masterVol,
-      ctx.currentTime,
-      2
+      ctx.currentTime + 1.5
     );
 
     this.isPlaying = true;

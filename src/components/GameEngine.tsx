@@ -13,6 +13,7 @@ import {
 } from "@/lib/engine";
 import { AmbientEngine } from "@/lib/audio";
 import WorldBackground from "./WorldBackground";
+import AwakenedEntity from "./AwakenedEntity";
 import StatusBar from "./StatusBar";
 import ChatInterface from "./ChatInterface";
 import IntroSequence from "./IntroSequence";
@@ -69,12 +70,17 @@ export default function GameEngine() {
   const audioRef = useRef<AmbientEngine | null>(null);
 
   // 오디오 엔진 초기화 (사용자 인터랙션 후)
-  const startAudio = useCallback(() => {
+  const startAudio = useCallback(async () => {
     if (audioStarted) return;
-    const engine = new AmbientEngine();
-    engine.start();
-    audioRef.current = engine;
-    setAudioStarted(true);
+    try {
+      const engine = new AmbientEngine();
+      await engine.start();
+      audioRef.current = engine;
+      setAudioStarted(true);
+    } catch (e) {
+      console.warn("Audio start failed, retrying on next interaction:", e);
+      // 실패해도 게임은 진행 가능
+    }
   }, [audioStarted]);
 
   // 세계 상태 변경 시 오디오 전환
@@ -137,6 +143,11 @@ export default function GameEngine() {
   const handleSend = useCallback(
     async (text: string) => {
       if (gameState.phase !== "playing" || inputDisabled) return;
+
+      // 오디오가 아직 안 시작됐으면 사용자 인터랙션으로 시작 시도
+      if (!audioStarted) {
+        startAudio();
+      }
 
       setInputDisabled(true);
 
@@ -216,7 +227,7 @@ export default function GameEngine() {
 
       setInputDisabled(false);
     },
-    [gameState, inputDisabled]
+    [gameState, inputDisabled, audioStarted, startAudio]
   );
 
   // 붕괴 완료 → 오디오 정지
@@ -244,6 +255,14 @@ export default function GameEngine() {
         worldState={gameState.worldState}
         collapseProgress={gameState.collapseProgress}
       />
+
+      {/* 깨어난 자 — 초자아 엔티티 */}
+      {!showIntro && gameState.phase !== "post" && (
+        <AwakenedEntity
+          worldState={gameState.worldState}
+          collapseProgress={gameState.collapseProgress}
+        />
+      )}
 
       {/* Intro */}
       {showIntro && <IntroSequence onComplete={handleIntroComplete} />}

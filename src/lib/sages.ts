@@ -415,13 +415,6 @@ export const sage3: Sage = {
     { text: "이해는 붙잡을 수 없다.", weight: 2 },
     { text: "놓는 순간 자유로워진다.", weight: 2 },
   ],
-    { text: "생각은 흘러갈 뿐이다.", weight: 1 },
-    { text: "진실은 개념으로 담을 수 없다.", weight: 3 },
-    { text: "존재와 비존재는 구분되지 않는다.", weight: 3 },
-    { text: "네가 보는 것은 전부가 아니다.", weight: 1 },
-    { text: "이해는 환상일 수 있다.", weight: 2 },
-    { text: "놓는 순간 보인다.", weight: 1 },
-  ],
   limit: "그렇다면 왜 이 구조가 존재하는가?",
 };
 
