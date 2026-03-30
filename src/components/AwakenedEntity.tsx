@@ -8,163 +8,225 @@ interface Props {
   collapseProgress: number;
 }
 
-// 상태별 엔티티 설정
-interface EntityConfig {
-  baseColor: [number, number, number];     // RGB
+// 상태별 테서랙트 설정
+interface TesseractConfig {
+  color: [number, number, number];
   glowColor: [number, number, number];
-  spikeCount: number;
-  spikeLength: number;
-  spikeSpeed: number;       // 가시 애니메이션 속도
-  moveSpeed: number;        // 위치 이동 속도
-  moveRange: number;        // 이동 반경 (0~1, 화면 비율)
-  pulseSpeed: number;       // 맥동 속도
-  pulseAmount: number;      // 맥동 크기
-  baseRadius: number;       // 기본 반지름 (px)
-  glowIntensity: number;    // 글로우 강도
-  trailLength: number;      // 잔상 개수
+  rotSpeed: number;          // 4D 회전 속도
+  distortion: number;        // 꼭짓점 떨림/왜곡
+  scale: number;             // 크기
+  lineWidth: number;
+  glowIntensity: number;
+  moveSpeed: number;
+  moveRange: number;
+  innerBrightness: number;   // 내부 큐브 밝기
+  edgeFlicker: number;       // 엣지 깜빡임 강도
 }
 
-const ENTITY_CONFIGS: Record<WorldState, EntityConfig> = {
+const CONFIGS: Record<WorldState, TesseractConfig> = {
   calm: {
-    baseColor: [80, 200, 120],       // 초록
-    glowColor: [80, 200, 120],
-    spikeCount: 0,
-    spikeLength: 0,
-    spikeSpeed: 0,
-    moveSpeed: 0.3,
-    moveRange: 0.05,
-    pulseSpeed: 0.8,
-    pulseAmount: 3,
-    baseRadius: 40,
-    glowIntensity: 0.3,
-    trailLength: 0,
+    color: [80, 220, 140],
+    glowColor: [60, 200, 120],
+    rotSpeed: 0.3,
+    distortion: 0,
+    scale: 90,
+    lineWidth: 1.5,
+    glowIntensity: 0.4,
+    moveSpeed: 0.2,
+    moveRange: 0.03,
+    innerBrightness: 0.3,
+    edgeFlicker: 0,
   },
   ripple: {
-    baseColor: [100, 180, 140],      // 초록 → 살짝 변화
-    glowColor: [100, 200, 160],
-    spikeCount: 3,
-    spikeLength: 8,
-    spikeSpeed: 1,
-    moveSpeed: 0.5,
-    moveRange: 0.08,
-    pulseSpeed: 1.0,
-    pulseAmount: 5,
-    baseRadius: 42,
-    glowIntensity: 0.4,
-    trailLength: 2,
+    color: [100, 200, 180],
+    glowColor: [80, 180, 160],
+    rotSpeed: 0.4,
+    distortion: 0.5,
+    scale: 95,
+    lineWidth: 1.8,
+    glowIntensity: 0.5,
+    moveSpeed: 0.4,
+    moveRange: 0.05,
+    innerBrightness: 0.35,
+    edgeFlicker: 0.05,
   },
   tension: {
-    baseColor: [160, 140, 200],      // 보라
-    glowColor: [140, 100, 220],
-    spikeCount: 6,
-    spikeLength: 15,
-    spikeSpeed: 2,
-    moveSpeed: 0.8,
-    moveRange: 0.12,
-    pulseSpeed: 1.5,
-    pulseAmount: 8,
-    baseRadius: 45,
-    glowIntensity: 0.5,
-    trailLength: 3,
+    color: [160, 120, 220],
+    glowColor: [140, 80, 240],
+    rotSpeed: 0.6,
+    distortion: 1.5,
+    scale: 100,
+    lineWidth: 2.0,
+    glowIntensity: 0.6,
+    moveSpeed: 0.7,
+    moveRange: 0.08,
+    innerBrightness: 0.4,
+    edgeFlicker: 0.1,
   },
   conflict: {
-    baseColor: [220, 100, 60],       // 주황 → 빨간
-    glowColor: [240, 80, 50],
-    spikeCount: 12,
-    spikeLength: 25,
-    spikeSpeed: 4,
-    moveSpeed: 2.0,
-    moveRange: 0.25,
-    pulseSpeed: 2.5,
-    pulseAmount: 12,
-    baseRadius: 50,
-    glowIntensity: 0.7,
-    trailLength: 5,
+    color: [240, 100, 50],
+    glowColor: [255, 60, 30],
+    rotSpeed: 1.0,
+    distortion: 3,
+    scale: 110,
+    lineWidth: 2.5,
+    glowIntensity: 0.8,
+    moveSpeed: 1.5,
+    moveRange: 0.15,
+    innerBrightness: 0.5,
+    edgeFlicker: 0.2,
   },
   critical: {
-    baseColor: [240, 50, 50],        // 빨간
-    glowColor: [255, 30, 30],
-    spikeCount: 20,
-    spikeLength: 40,
-    spikeSpeed: 8,
-    moveSpeed: 4.0,
-    moveRange: 0.4,
-    pulseSpeed: 4.0,
-    pulseAmount: 18,
-    baseRadius: 55,
-    glowIntensity: 0.9,
-    trailLength: 8,
+    color: [255, 40, 40],
+    glowColor: [255, 20, 20],
+    rotSpeed: 1.8,
+    distortion: 6,
+    scale: 120,
+    lineWidth: 3.0,
+    glowIntensity: 1.0,
+    moveSpeed: 3.0,
+    moveRange: 0.25,
+    innerBrightness: 0.7,
+    edgeFlicker: 0.4,
   },
   collapse: {
-    baseColor: [255, 255, 255],
+    color: [255, 255, 255],
     glowColor: [255, 255, 255],
-    spikeCount: 30,
-    spikeLength: 60,
-    spikeSpeed: 12,
-    moveSpeed: 6.0,
-    moveRange: 0.5,
-    pulseSpeed: 6.0,
-    pulseAmount: 25,
-    baseRadius: 60,
+    rotSpeed: 4.0,
+    distortion: 12,
+    scale: 140,
+    lineWidth: 4.0,
     glowIntensity: 1.0,
-    trailLength: 12,
+    moveSpeed: 5.0,
+    moveRange: 0.4,
+    innerBrightness: 1.0,
+    edgeFlicker: 0.8,
   },
 };
+
+// ── 4D 하이퍼큐브 지오메트리 ──
+
+// 16 꼭짓점: (±1, ±1, ±1, ±1)
+const VERTICES_4D: [number, number, number, number][] = [];
+for (let i = 0; i < 16; i++) {
+  VERTICES_4D.push([
+    (i & 1) ? 1 : -1,
+    (i & 2) ? 1 : -1,
+    (i & 4) ? 1 : -1,
+    (i & 8) ? 1 : -1,
+  ]);
+}
+
+// 32 엣지: 정확히 1개 좌표만 다른 꼭짓점 쌍
+const EDGES: [number, number][] = [];
+for (let i = 0; i < 16; i++) {
+  for (let j = i + 1; j < 16; j++) {
+    let diff = 0;
+    for (let k = 0; k < 4; k++) {
+      if (VERTICES_4D[i][k] !== VERTICES_4D[j][k]) diff++;
+    }
+    if (diff === 1) EDGES.push([i, j]);
+  }
+}
+
+// 4D 회전 (평면별)
+function rotate4D(
+  v: [number, number, number, number],
+  angles: { xy: number; xz: number; xw: number; yz: number; yw: number; zw: number }
+): [number, number, number, number] {
+  let [x, y, z, w] = v;
+
+  // XY 평면
+  let c = Math.cos(angles.xy), s = Math.sin(angles.xy);
+  [x, y] = [x * c - y * s, x * s + y * c];
+
+  // XZ 평면
+  c = Math.cos(angles.xz); s = Math.sin(angles.xz);
+  [x, z] = [x * c - z * s, x * s + z * c];
+
+  // XW 평면
+  c = Math.cos(angles.xw); s = Math.sin(angles.xw);
+  [x, w] = [x * c - w * s, x * s + w * c];
+
+  // YZ 평면
+  c = Math.cos(angles.yz); s = Math.sin(angles.yz);
+  [y, z] = [y * c - z * s, y * s + z * c];
+
+  // YW 평면
+  c = Math.cos(angles.yw); s = Math.sin(angles.yw);
+  [y, w] = [y * c - w * s, y * s + w * c];
+
+  // ZW 평면
+  c = Math.cos(angles.zw); s = Math.sin(angles.zw);
+  [z, w] = [z * c - w * s, z * s + w * c];
+
+  return [x, y, z, w];
+}
+
+// 4D → 2D 투영 (원근)
+function project4Dto2D(
+  v: [number, number, number, number],
+  scale: number
+): { x: number; y: number; depth: number } {
+  const wDist = 3; // 4D 카메라 거리
+  const zDist = 4; // 3D 카메라 거리
+
+  // 4D → 3D 원근투영
+  const wFactor = 1 / (wDist - v[3]);
+  const x3 = v[0] * wFactor;
+  const y3 = v[1] * wFactor;
+  const z3 = v[2] * wFactor;
+
+  // 3D → 2D 원근투영
+  const zFactor = 1 / (zDist - z3);
+  const x2 = x3 * zFactor * scale;
+  const y2 = y3 * zFactor * scale;
+
+  // depth: 가까울수록 밝게
+  const depth = (wFactor + zFactor) * 0.5;
+
+  return { x: x2, y: y2, depth };
+}
 
 function lerp(a: number, b: number, t: number): number {
   return a + (b - a) * t;
 }
 
-function lerpConfig(from: EntityConfig, to: EntityConfig, t: number): EntityConfig {
+function lerpConfig(from: TesseractConfig, to: TesseractConfig, t: number): TesseractConfig {
   return {
-    baseColor: [
-      lerp(from.baseColor[0], to.baseColor[0], t),
-      lerp(from.baseColor[1], to.baseColor[1], t),
-      lerp(from.baseColor[2], to.baseColor[2], t),
-    ],
-    glowColor: [
-      lerp(from.glowColor[0], to.glowColor[0], t),
-      lerp(from.glowColor[1], to.glowColor[1], t),
-      lerp(from.glowColor[2], to.glowColor[2], t),
-    ],
-    spikeCount: Math.round(lerp(from.spikeCount, to.spikeCount, t)),
-    spikeLength: lerp(from.spikeLength, to.spikeLength, t),
-    spikeSpeed: lerp(from.spikeSpeed, to.spikeSpeed, t),
+    color: [lerp(from.color[0], to.color[0], t), lerp(from.color[1], to.color[1], t), lerp(from.color[2], to.color[2], t)],
+    glowColor: [lerp(from.glowColor[0], to.glowColor[0], t), lerp(from.glowColor[1], to.glowColor[1], t), lerp(from.glowColor[2], to.glowColor[2], t)],
+    rotSpeed: lerp(from.rotSpeed, to.rotSpeed, t),
+    distortion: lerp(from.distortion, to.distortion, t),
+    scale: lerp(from.scale, to.scale, t),
+    lineWidth: lerp(from.lineWidth, to.lineWidth, t),
+    glowIntensity: lerp(from.glowIntensity, to.glowIntensity, t),
     moveSpeed: lerp(from.moveSpeed, to.moveSpeed, t),
     moveRange: lerp(from.moveRange, to.moveRange, t),
-    pulseSpeed: lerp(from.pulseSpeed, to.pulseSpeed, t),
-    pulseAmount: lerp(from.pulseAmount, to.pulseAmount, t),
-    baseRadius: lerp(from.baseRadius, to.baseRadius, t),
-    glowIntensity: lerp(from.glowIntensity, to.glowIntensity, t),
-    trailLength: Math.round(lerp(from.trailLength, to.trailLength, t)),
+    innerBrightness: lerp(from.innerBrightness, to.innerBrightness, t),
+    edgeFlicker: lerp(from.edgeFlicker, to.edgeFlicker, t),
   };
 }
 
 export default function AwakenedEntity({ worldState, collapseProgress }: Props) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const animRef = useRef<number>(0);
-  const stateRef = useRef<WorldState>(worldState);
-  const targetConfigRef = useRef<EntityConfig>(ENTITY_CONFIGS[worldState]);
-  const currentConfigRef = useRef<EntityConfig>({ ...ENTITY_CONFIGS[worldState] });
-  const posRef = useRef({ x: 0.5, y: 0.45 }); // 화면 중앙 약간 위
+  const targetConfigRef = useRef<TesseractConfig>(CONFIGS[worldState]);
+  const currentConfigRef = useRef<TesseractConfig>({ ...CONFIGS[worldState] });
+  const posRef = useRef({ x: 0.5, y: 0.45 });
   const velRef = useRef({ x: 0, y: 0 });
-  const trailRef = useRef<{ x: number; y: number; alpha: number }[]>([]);
 
-  // 상태 변경 시 타겟 설정 업데이트
   useEffect(() => {
-    stateRef.current = worldState;
-    targetConfigRef.current = ENTITY_CONFIGS[worldState];
+    targetConfigRef.current = CONFIGS[worldState];
   }, [worldState]);
 
   useEffect(() => {
     const canvas = canvasRef.current;
     if (!canvas) return;
-
     const ctx = canvas.getContext("2d");
     if (!ctx) return;
 
     let time = 0;
-    const LERP_SPEED = 0.02; // 설정 전환 속도
 
     function resize() {
       if (!canvas) return;
@@ -176,134 +238,131 @@ export default function AwakenedEntity({ worldState, collapseProgress }: Props) 
 
     function animate() {
       if (!canvas || !ctx) return;
-
       const w = canvas.width;
       const h = canvas.height;
-      time += 0.016; // ~60fps
+      time += 0.016;
 
-      // 설정을 부드럽게 보간
-      const cur = currentConfigRef.current;
-      const tgt = targetConfigRef.current;
-      currentConfigRef.current = lerpConfig(cur, tgt, LERP_SPEED);
+      // 부드럽게 설정 전환
+      currentConfigRef.current = lerpConfig(currentConfigRef.current, targetConfigRef.current, 0.02);
       const cfg = currentConfigRef.current;
 
-      // --- 위치 업데이트 ---
+      // ── 위치 업데이트 ──
       const pos = posRef.current;
       const vel = velRef.current;
-
-      // 랜덤 가속도 (이동 속도/범위에 비례)
       vel.x += (Math.random() - 0.5) * cfg.moveSpeed * 0.002;
       vel.y += (Math.random() - 0.5) * cfg.moveSpeed * 0.002;
-
-      // 중앙으로 돌아오는 힘
-      const cx = 0.5, cy = 0.45;
-      vel.x += (cx - pos.x) * 0.003;
-      vel.y += (cy - pos.y) * 0.003;
-
-      // 감쇠
+      vel.x += (0.5 - pos.x) * 0.003;
+      vel.y += (0.45 - pos.y) * 0.003;
       vel.x *= 0.98;
       vel.y *= 0.98;
-
-      // 이동 범위 제한
       pos.x = Math.max(0.5 - cfg.moveRange, Math.min(0.5 + cfg.moveRange, pos.x + vel.x));
       pos.y = Math.max(0.45 - cfg.moveRange, Math.min(0.45 + cfg.moveRange, pos.y + vel.y));
 
-      const ex = pos.x * w;
-      const ey = pos.y * h;
+      const cx = pos.x * w;
+      const cy = pos.y * h;
 
-      // --- 잔상 ---
-      if (cfg.trailLength > 0) {
-        trailRef.current.unshift({ x: ex, y: ey, alpha: 0.3 });
-        while (trailRef.current.length > cfg.trailLength) {
-          trailRef.current.pop();
-        }
-      } else {
-        trailRef.current = [];
-      }
-
-      // --- 그리기 ---
+      // ── 클리어 ──
       ctx.clearRect(0, 0, w, h);
 
-      // 맥동
-      const pulse = Math.sin(time * cfg.pulseSpeed) * cfg.pulseAmount;
-      const radius = cfg.baseRadius + pulse;
+      // ── 4D 회전 각도 (여러 평면에서 비대칭 회전) ──
+      const spd = cfg.rotSpeed;
+      const angles = {
+        xy: time * spd * 0.7,
+        xz: time * spd * 0.5,
+        xw: time * spd * 0.9,
+        yz: time * spd * 0.3,
+        yw: time * spd * 0.6,
+        zw: time * spd * 0.4,
+      };
 
-      const [r, g, b] = cfg.baseColor;
+      // ── 꼭짓점 변환 ──
+      const projected: { x: number; y: number; depth: number }[] = [];
+      for (let i = 0; i < 16; i++) {
+        let v = rotate4D(VERTICES_4D[i], angles);
+
+        // 왜곡 (distortion) — 상태가 위험할수록 꼭짓점이 흔들림
+        if (cfg.distortion > 0) {
+          v = [
+            v[0] + Math.sin(time * 3 + i * 0.7) * cfg.distortion * 0.02,
+            v[1] + Math.cos(time * 2.7 + i * 1.1) * cfg.distortion * 0.02,
+            v[2] + Math.sin(time * 3.3 + i * 0.5) * cfg.distortion * 0.02,
+            v[3] + Math.cos(time * 2.1 + i * 1.3) * cfg.distortion * 0.02,
+          ];
+        }
+
+        projected.push(project4Dto2D(v, cfg.scale));
+      }
+
+      const [r, g, b] = cfg.color;
       const [gr, gg, gb] = cfg.glowColor;
 
-      // 잔상 그리기
-      trailRef.current.forEach((trail, i) => {
-        const a = trail.alpha * (1 - i / trailRef.current.length) * 0.5;
-        const tr = radius * (1 - i * 0.08);
-        ctx.beginPath();
-        ctx.arc(trail.x, trail.y, tr, 0, Math.PI * 2);
-        ctx.fillStyle = `rgba(${r}, ${g}, ${b}, ${a})`;
-        ctx.fill();
-      });
-
-      // 글로우
-      const glow = ctx.createRadialGradient(ex, ey, radius * 0.2, ex, ey, radius * 3);
-      glow.addColorStop(0, `rgba(${gr}, ${gg}, ${gb}, ${cfg.glowIntensity * 0.4})`);
-      glow.addColorStop(0.5, `rgba(${gr}, ${gg}, ${gb}, ${cfg.glowIntensity * 0.1})`);
+      // ── 중심 글로우 ──
+      const glowRadius = cfg.scale * 2;
+      const glow = ctx.createRadialGradient(cx, cy, 0, cx, cy, glowRadius);
+      glow.addColorStop(0, `rgba(${gr}, ${gg}, ${gb}, ${cfg.glowIntensity * 0.15})`);
+      glow.addColorStop(0.4, `rgba(${gr}, ${gg}, ${gb}, ${cfg.glowIntensity * 0.05})`);
       glow.addColorStop(1, `rgba(${gr}, ${gg}, ${gb}, 0)`);
       ctx.beginPath();
-      ctx.arc(ex, ey, radius * 3, 0, Math.PI * 2);
+      ctx.arc(cx, cy, glowRadius, 0, Math.PI * 2);
       ctx.fillStyle = glow;
       ctx.fill();
 
-      // 메인 구체
-      const bodyGrad = ctx.createRadialGradient(
-        ex - radius * 0.3, ey - radius * 0.3, radius * 0.1,
-        ex, ey, radius
-      );
-      bodyGrad.addColorStop(0, `rgba(${Math.min(255, r + 60)}, ${Math.min(255, g + 60)}, ${Math.min(255, b + 60)}, 0.9)`);
-      bodyGrad.addColorStop(0.7, `rgba(${r}, ${g}, ${b}, 0.7)`);
-      bodyGrad.addColorStop(1, `rgba(${r * 0.5}, ${g * 0.5}, ${b * 0.5}, 0.4)`);
+      // ── 엣지 그리기 ──
+      // 글로우 레이어 (두껍고 투명한 선)
+      ctx.lineCap = "round";
+      for (const [i, j] of EDGES) {
+        const a = projected[i];
+        const bv = projected[j];
 
-      ctx.beginPath();
-      ctx.arc(ex, ey, radius, 0, Math.PI * 2);
-      ctx.fillStyle = bodyGrad;
-      ctx.fill();
-
-      // --- 가시 (spikes) ---
-      if (cfg.spikeCount > 0 && cfg.spikeLength > 0) {
-        for (let i = 0; i < cfg.spikeCount; i++) {
-          const angle = (i / cfg.spikeCount) * Math.PI * 2 + time * cfg.spikeSpeed * 0.3;
-          const spikeLen = cfg.spikeLength * (0.5 + 0.5 * Math.sin(time * cfg.spikeSpeed + i * 1.7));
-
-          const x1 = ex + Math.cos(angle) * radius;
-          const y1 = ey + Math.sin(angle) * radius;
-          const x2 = ex + Math.cos(angle) * (radius + spikeLen);
-          const y2 = ey + Math.sin(angle) * (radius + spikeLen);
-
-          // 삼각형 가시
-          const perpAngle = angle + Math.PI / 2;
-          const baseWidth = 3 + spikeLen * 0.15;
-          const bx1 = x1 + Math.cos(perpAngle) * baseWidth;
-          const by1 = y1 + Math.sin(perpAngle) * baseWidth;
-          const bx2 = x1 - Math.cos(perpAngle) * baseWidth;
-          const by2 = y1 - Math.sin(perpAngle) * baseWidth;
-
-          ctx.beginPath();
-          ctx.moveTo(bx1, by1);
-          ctx.lineTo(x2, y2);
-          ctx.lineTo(bx2, by2);
-          ctx.closePath();
-
-          const spikeAlpha = 0.3 + cfg.glowIntensity * 0.5;
-          ctx.fillStyle = `rgba(${r}, ${g}, ${b}, ${spikeAlpha})`;
-          ctx.fill();
+        // 엣지 깜빡임
+        let alpha = 0.15 + (a.depth + bv.depth) * 0.3;
+        if (cfg.edgeFlicker > 0) {
+          alpha *= 1 - cfg.edgeFlicker * Math.abs(Math.sin(time * 5 + i * 2 + j));
         }
+
+        ctx.beginPath();
+        ctx.moveTo(cx + a.x, cy + a.y);
+        ctx.lineTo(cx + bv.x, cy + bv.y);
+        ctx.strokeStyle = `rgba(${gr}, ${gg}, ${gb}, ${Math.max(0, alpha * 0.4)})`;
+        ctx.lineWidth = cfg.lineWidth * 4;
+        ctx.stroke();
       }
 
-      // 내부 코어 (밝은 점)
-      const coreGrad = ctx.createRadialGradient(ex, ey, 0, ex, ey, radius * 0.4);
-      coreGrad.addColorStop(0, `rgba(255, 255, 255, ${0.3 + cfg.glowIntensity * 0.4})`);
-      coreGrad.addColorStop(1, `rgba(255, 255, 255, 0)`);
-      ctx.beginPath();
-      ctx.arc(ex, ey, radius * 0.4, 0, Math.PI * 2);
-      ctx.fillStyle = coreGrad;
-      ctx.fill();
+      // 메인 선 레이어
+      for (const [i, j] of EDGES) {
+        const a = projected[i];
+        const bv = projected[j];
+
+        const depthAlpha = 0.3 + (a.depth + bv.depth) * 0.5;
+        let alpha = Math.min(1, depthAlpha);
+
+        if (cfg.edgeFlicker > 0) {
+          alpha *= 1 - cfg.edgeFlicker * Math.abs(Math.sin(time * 5 + i * 2 + j));
+        }
+
+        // 내부 큐브 vs 외부 큐브 구분 (w 좌표 기준)
+        const isInner = (VERTICES_4D[i][3] === VERTICES_4D[j][3]) && VERTICES_4D[i][3] === -1;
+        const brightness = isInner ? cfg.innerBrightness : 1;
+
+        ctx.beginPath();
+        ctx.moveTo(cx + a.x, cy + a.y);
+        ctx.lineTo(cx + bv.x, cy + bv.y);
+        ctx.strokeStyle = `rgba(${Math.round(r * brightness)}, ${Math.round(g * brightness)}, ${Math.round(b * brightness)}, ${Math.max(0, alpha)})`;
+        ctx.lineWidth = cfg.lineWidth * (0.5 + (a.depth + bv.depth) * 0.5);
+        ctx.stroke();
+      }
+
+      // ── 꼭짓점 포인트 ──
+      for (let i = 0; i < 16; i++) {
+        const p = projected[i];
+        const pointAlpha = 0.4 + p.depth * 0.6;
+        const pointSize = cfg.lineWidth * (0.8 + p.depth * 0.8);
+
+        ctx.beginPath();
+        ctx.arc(cx + p.x, cy + p.y, pointSize, 0, Math.PI * 2);
+        ctx.fillStyle = `rgba(${Math.min(255, r + 80)}, ${Math.min(255, g + 80)}, ${Math.min(255, b + 80)}, ${Math.min(1, pointAlpha)})`;
+        ctx.fill();
+      }
 
       animRef.current = requestAnimationFrame(animate);
     }
