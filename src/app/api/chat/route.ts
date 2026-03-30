@@ -36,12 +36,14 @@ export async function POST(request: Request) {
       );
     }
 
-    const systemPrompt = buildSystemPrompt(
+    // 답변 회피/무응답 방지: 반드시 질문에 철학적으로 응답하라는 지시 추가
+    let systemPrompt = buildSystemPrompt(
       activation,
       worldState,
       turnCount,
       collapseProgress
     );
+    systemPrompt += `\n\n규칙 추가:\n- 어떤 질문에도 반드시 철학적 관점에서 응답할 것.\n- 질문이 모호하거나 의미가 없어도, 현자의 관점에서 의미를 부여해 답변할 것.\n- "대답할 수 없다", "모르겠다" 등 회피성 답변은 금지.\n- 답변이 짧거나 중단될 경우 이어서 계속 답변할 것.`;
 
     // 대화 히스토리를 Gemini contents 포맷으로 변환 (최신 8턴만)
     const trimmedHistory = history.slice(-8);
@@ -80,7 +82,7 @@ export async function POST(request: Request) {
     text = text.replace(/\n{3,}/g, "\n\n").trim();
 
     if (!text) {
-      text = "…\n\n그 질문은… 깊은 곳을 건드리는군.\n\n다시 물어봐.";
+      text = "…\n\n모든 질문에는 의미가 있다.\n\n네가 던진 물음도, 이 세계에 흔적을 남긴다.";
     }
 
     return Response.json({ text });
