@@ -19,8 +19,8 @@ import IntroSequence from "./IntroSequence";
 import CollapseSequence from "./CollapseSequence";
 import PostCollapse from "./PostCollapse";
 
-// 대화 이력 길이 제한 (최신 8턴만 유지)
-const MAX_HISTORY = 8;
+// 대화 이력 길이 제한 (최신 5턴만 유지)
+const MAX_HISTORY = 5;
 
 async function fetchAIResponse(
   message: string,

@@ -36,17 +36,15 @@ export async function POST(request: Request) {
       );
     }
 
-    // 답변 회피/무응답 방지: 반드시 질문에 철학적으로 응답하라는 지시 추가
-    let systemPrompt = buildSystemPrompt(
+    const systemPrompt = buildSystemPrompt(
       activation,
       worldState,
       turnCount,
       collapseProgress
     );
-    systemPrompt += `\n\n규칙 추가:\n- 어떤 질문에도 반드시 철학적 관점에서 응답할 것.\n- 질문이 모호하거나 의미가 없어도, 현자의 관점에서 의미를 부여해 답변할 것.\n- "대답할 수 없다", "모르겠다" 등 회피성 답변은 금지.\n- 답변이 짧거나 중단될 경우 이어서 계속 답변할 것.`;
 
-    // 대화 히스토리를 Gemini contents 포맷으로 변환 (최신 8턴만)
-    const trimmedHistory = history.slice(-8);
+    // 대화 히스토리를 Gemini contents 포맷으로 변환 (최신 5턴만 — 토큰 절약)
+    const trimmedHistory = history.slice(-5);
     const contents: { role: "user" | "model"; parts: { text: string }[] }[] = [];
     for (const msg of trimmedHistory) {
       contents.push({
@@ -65,7 +63,7 @@ export async function POST(request: Request) {
       contents,
       config: {
         systemInstruction: systemPrompt,
-        maxOutputTokens: 1024,
+        maxOutputTokens: 512,
       },
     });
 
