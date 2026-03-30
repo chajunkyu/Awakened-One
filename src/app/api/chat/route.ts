@@ -13,6 +13,7 @@ interface ChatRequest {
   worldState: WorldState;
   turnCount: number;
   collapseProgress: number;
+  continuePrompt?: boolean;
 }
 
 export async function POST(request: Request) {
@@ -25,6 +26,7 @@ export async function POST(request: Request) {
       worldState,
       turnCount,
       collapseProgress,
+      continuePrompt,
     } = body;
 
     if (!process.env.GEMINI_API_KEY) {
@@ -41,21 +43,19 @@ export async function POST(request: Request) {
       collapseProgress
     );
 
-    // 대화 히스토리를 Gemini contents 포맷으로 변환
-    const contents: { role: "user" | "model"; parts: { text: string }[] }[] =
-      [];
-
-    for (const msg of history) {
+    // 대화 히스토리를 Gemini contents 포맷으로 변환 (최신 8턴만)
+    const trimmedHistory = history.slice(-8);
+    const contents: { role: "user" | "model"; parts: { text: string }[] }[] = [];
+    for (const msg of trimmedHistory) {
       contents.push({
         role: msg.role === "player" ? "user" : "model",
         parts: [{ text: msg.text }],
       });
     }
-
-    // 현재 플레이어 메시지 추가
+    // 현재 플레이어 메시지 추가 (이어받기면 '계속' 프롬프트)
     contents.push({
       role: "user",
-      parts: [{ text: message }],
+      parts: [{ text: continuePrompt ? `${message}\n\n계속` : message }],
     });
 
     const response = await genai.models.generateContent({
@@ -63,7 +63,7 @@ export async function POST(request: Request) {
       contents,
       config: {
         systemInstruction: systemPrompt,
-        maxOutputTokens: 500,
+        maxOutputTokens: 1024,
       },
     });
 

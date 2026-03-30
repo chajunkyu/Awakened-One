@@ -19,22 +19,29 @@ import IntroSequence from "./IntroSequence";
 import CollapseSequence from "./CollapseSequence";
 import PostCollapse from "./PostCollapse";
 
+// 대화 이력 길이 제한 (최신 8턴만 유지)
+const MAX_HISTORY = 8;
+
 async function fetchAIResponse(
   message: string,
   history: { role: "player" | "awakened"; text: string }[],
-  state: GameState
+  state: GameState,
+  continuePrompt?: boolean
 ): Promise<string> {
   try {
+    // 최신 MAX_HISTORY개만 전달
+    const trimmedHistory = history.slice(-MAX_HISTORY);
     const res = await fetch("/api/chat", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
         message,
-        history: history.map((m) => ({ role: m.role, text: m.text })),
+        history: trimmedHistory.map((m) => ({ role: m.role, text: m.text })),
         activation: state.activation,
         worldState: state.worldState,
         turnCount: state.turnCount,
         collapseProgress: state.collapseProgress,
+        continuePrompt: continuePrompt || false,
       }),
     });
 
@@ -57,6 +64,8 @@ export default function GameEngine() {
   const [showCollapse, setShowCollapse] = useState(false);
   const [inputDisabled, setInputDisabled] = useState(false);
   const [audioStarted, setAudioStarted] = useState(false);
+  const [pendingContinuation, setPendingContinuation] = useState<null | { lastPlayer: string; lastHistory: { role: "player" | "awakened"; text: string }[]; state: GameState }>(null);
+  const [showContinueNotice, setShowContinueNotice] = useState(false);
   const audioRef = useRef<AmbientEngine | null>(null);
 
   // 오디오 엔진 초기화 (사용자 인터랙션 후)
@@ -103,6 +112,28 @@ export default function GameEngine() {
   }, [startAudio]);
 
   // 플레이어 입력 처리 (Claude API 연동)
+  // 이어받기(continue) 처리
+  const handleContinue = useCallback(async () => {
+    if (!pendingContinuation) return;
+    setInputDisabled(true);
+    setShowContinueNotice(false);
+    const { lastPlayer, lastHistory, state } = pendingContinuation;
+    const aiText = await fetchAIResponse(lastPlayer, lastHistory, state, true);
+    // 마지막 메시지(awakened) 교체
+    setGameState((prev) => {
+      const msgs = [...prev.messages];
+      // 마지막이 awakened면 교체, 아니면 추가
+      if (msgs.length > 0 && msgs[msgs.length - 1].role === "awakened") {
+        msgs[msgs.length - 1] = { ...msgs[msgs.length - 1], text: aiText };
+      } else {
+        msgs.push({ role: "awakened", text: aiText });
+      }
+      return { ...prev, messages: msgs };
+    });
+    setPendingContinuation(null);
+    setInputDisabled(false);
+  }, [pendingContinuation]);
+
   const handleSend = useCallback(
     async (text: string) => {
       if (gameState.phase !== "playing" || inputDisabled) return;
@@ -150,6 +181,21 @@ export default function GameEngine() {
         text: aiText,
         sageInfluence: influence.length > 0 ? influence : undefined,
       };
+
+      // 응답이 중간에 끊긴 듯한 패턴 감지 (예: ...로 끝나거나, 30자 미만, 마지막 줄이 미완성)
+      const isLikelyCutoff =
+        aiText.trim().endsWith("…") ||
+        aiText.trim().length < 30 ||
+        /다시 물어봐|연결이 흔들린다|계속|이어|더 입력|더 말해|더 보여|더 알려|continue|more|keep going/i.test(aiText);
+
+      if (isLikelyCutoff) {
+        setPendingContinuation({
+          lastPlayer: text,
+          lastHistory: [...gameState.messages, playerMsg],
+          state: stateForAPI,
+        });
+        setShowContinueNotice(true);
+      }
 
       const isCollapse = worldState === "collapse";
 
@@ -222,6 +268,19 @@ export default function GameEngine() {
             turnCount={gameState.turnCount}
           />
           <div className="flex-1 overflow-hidden">
+            {/* 이어받기 안내 메시지 */}
+            {showContinueNotice && (
+              <div className="absolute left-1/2 top-8 -translate-x-1/2 z-30 bg-black/80 border border-amber-400/30 rounded-xl px-6 py-3 text-amber-200/80 text-sm shadow-xl animate-fade-in-slow flex items-center gap-4">
+                <span>응답이 길어 중간에 멈췄습니다. <b>계속</b>을 눌러 이어서 볼 수 있습니다.</span>
+                <button
+                  className="ml-4 px-4 py-1.5 rounded-full bg-amber-400/20 hover:bg-amber-400/40 text-amber-900 text-xs font-bold transition-colors duration-300"
+                  onClick={handleContinue}
+                  disabled={inputDisabled}
+                >
+                  계속
+                </button>
+              </div>
+            )}
             <ChatInterface
               messages={gameState.messages}
               worldState={gameState.worldState}
