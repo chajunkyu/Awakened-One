@@ -27,9 +27,9 @@ const CONFIGS: Record<WorldState, TesseractConfig> = {
   calm: {
     color: [80, 220, 140],
     glowColor: [60, 200, 120],
-    rotSpeed: 0.15,
+    rotSpeed: 0.25,
     distortion: 0,
-    scale: 200,
+    scale: 280,
     lineWidth: 1.5,
     glowIntensity: 0.4,
     moveSpeed: 0,
@@ -40,9 +40,9 @@ const CONFIGS: Record<WorldState, TesseractConfig> = {
   ripple: {
     color: [100, 200, 180],
     glowColor: [80, 180, 160],
-    rotSpeed: 0.2,
+    rotSpeed: 0.35,
     distortion: 0.5,
-    scale: 210,
+    scale: 290,
     lineWidth: 1.8,
     glowIntensity: 0.5,
     moveSpeed: 0,
@@ -53,9 +53,9 @@ const CONFIGS: Record<WorldState, TesseractConfig> = {
   tension: {
     color: [160, 120, 220],
     glowColor: [140, 80, 240],
-    rotSpeed: 0.3,
+    rotSpeed: 0.5,
     distortion: 1.5,
-    scale: 220,
+    scale: 300,
     lineWidth: 2.0,
     glowIntensity: 0.6,
     moveSpeed: 0,
@@ -66,9 +66,9 @@ const CONFIGS: Record<WorldState, TesseractConfig> = {
   conflict: {
     color: [240, 100, 50],
     glowColor: [255, 60, 30],
-    rotSpeed: 0.5,
+    rotSpeed: 0.8,
     distortion: 3,
-    scale: 230,
+    scale: 320,
     lineWidth: 2.5,
     glowIntensity: 0.8,
     moveSpeed: 0,
@@ -79,9 +79,9 @@ const CONFIGS: Record<WorldState, TesseractConfig> = {
   critical: {
     color: [255, 40, 40],
     glowColor: [255, 20, 20],
-    rotSpeed: 0.8,
+    rotSpeed: 1.2,
     distortion: 6,
-    scale: 250,
+    scale: 340,
     lineWidth: 3.0,
     glowIntensity: 1.0,
     moveSpeed: 0,
@@ -92,9 +92,9 @@ const CONFIGS: Record<WorldState, TesseractConfig> = {
   collapse: {
     color: [255, 255, 255],
     glowColor: [255, 255, 255],
-    rotSpeed: 2.0,
+    rotSpeed: 3.0,
     distortion: 12,
-    scale: 280,
+    scale: 380,
     lineWidth: 4.0,
     glowIntensity: 1.0,
     moveSpeed: 0,
@@ -244,22 +244,23 @@ export default function AwakenedEntity({ worldState, collapseProgress }: Props) 
       currentConfigRef.current = lerpConfig(currentConfigRef.current, targetConfigRef.current, 0.008);
       const cfg = currentConfigRef.current;
 
-      // 화면 중앙 고정
-      const cx = w * 0.5;
-      const cy = h * 0.45;
+      // 반응형 위치: 모바일(768px 미만)은 우측 상단, 데스크톱은 중앙
+      const isMobile = w < 768;
+      const cx = isMobile ? w * 0.7 : w * 0.5;
+      const cy = isMobile ? h * 0.22 : h * 0.45;
 
       // ── 클리어 ──
       ctx.clearRect(0, 0, w, h);
 
-      // ── 4D 회전 각도 (여러 평면에서 비대칭 회전) ──
+      // ── 4D 회전 각도 (강한 비대칭 — 각 평면 속도가 매우 다름) ──
       const spd = cfg.rotSpeed;
       const angles = {
-        xy: time * spd * 0.7,
-        xz: time * spd * 0.5,
-        xw: time * spd * 0.9,
-        yz: time * spd * 0.3,
-        yw: time * spd * 0.6,
-        zw: time * spd * 0.4,
+        xy: time * spd * 1.0,
+        xz: time * spd * 0.23,
+        xw: time * spd * 1.7,
+        yz: time * spd * 0.11,
+        yw: time * spd * 0.67,
+        zw: time * spd * 0.41,
       };
 
       // ── 꼭짓점 변환 ──
@@ -277,7 +278,9 @@ export default function AwakenedEntity({ worldState, collapseProgress }: Props) 
           ];
         }
 
-        projected.push(project4Dto2D(v, cfg.scale));
+        // 모바일에서는 크기를 60%로 축소
+        const effectiveScale = isMobile ? cfg.scale * 0.6 : cfg.scale;
+        projected.push(project4Dto2D(v, effectiveScale));
       }
 
       const [r, g, b] = cfg.color;
