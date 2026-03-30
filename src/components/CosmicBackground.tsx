@@ -54,10 +54,10 @@ const CONFIGS: Record<WorldState, CosmicConfig> = {
     coreIntensity: 0.5,
     tessColor: [180, 220, 255],
     tessRotSpeed: 0.25,
-    tessScale: 150,
-    tessLineWidth: 1.5,
+    tessScale: 280,
+    tessLineWidth: 1.8,
     tessDistortion: 0,
-    tessAlpha: 0.8,
+    tessAlpha: 0.85,
   },
   ripple: {
     bgColors: ["#0c1830", "#10253f", "#0a1e2e"],
@@ -76,10 +76,10 @@ const CONFIGS: Record<WorldState, CosmicConfig> = {
     coreIntensity: 0.6,
     tessColor: [160, 210, 255],
     tessRotSpeed: 0.35,
-    tessScale: 160,
-    tessLineWidth: 1.6,
+    tessScale: 290,
+    tessLineWidth: 2.0,
     tessDistortion: 0.5,
-    tessAlpha: 0.8,
+    tessAlpha: 0.85,
   },
   tension: {
     bgColors: ["#14102a", "#1a1040", "#120e28"],
@@ -98,10 +98,10 @@ const CONFIGS: Record<WorldState, CosmicConfig> = {
     coreIntensity: 0.7,
     tessColor: [220, 160, 255],
     tessRotSpeed: 0.5,
-    tessScale: 170,
-    tessLineWidth: 1.8,
+    tessScale: 300,
+    tessLineWidth: 2.2,
     tessDistortion: 1.5,
-    tessAlpha: 0.85,
+    tessAlpha: 0.9,
   },
   conflict: {
     bgColors: ["#1a0e14", "#2a1018", "#1e0c10"],
@@ -120,8 +120,8 @@ const CONFIGS: Record<WorldState, CosmicConfig> = {
     coreIntensity: 0.85,
     tessColor: [255, 200, 100],
     tessRotSpeed: 0.8,
-    tessScale: 180,
-    tessLineWidth: 2.2,
+    tessScale: 320,
+    tessLineWidth: 2.5,
     tessDistortion: 3,
     tessAlpha: 0.9,
   },
@@ -142,8 +142,8 @@ const CONFIGS: Record<WorldState, CosmicConfig> = {
     coreIntensity: 1.0,
     tessColor: [255, 120, 180],
     tessRotSpeed: 1.2,
-    tessScale: 200,
-    tessLineWidth: 2.8,
+    tessScale: 350,
+    tessLineWidth: 3.0,
     tessDistortion: 6,
     tessAlpha: 0.95,
   },
@@ -164,8 +164,8 @@ const CONFIGS: Record<WorldState, CosmicConfig> = {
     coreIntensity: 1.0,
     tessColor: [255, 255, 255],
     tessRotSpeed: 3.0,
-    tessScale: 220,
-    tessLineWidth: 3.5,
+    tessScale: 400,
+    tessLineWidth: 4.0,
     tessDistortion: 12,
     tessAlpha: 1.0,
   },
@@ -383,12 +383,16 @@ export default function CosmicBackground({ worldState, collapseProgress }: Props
         p.x += p.vx * cfg.particleSpeed;
         p.y += p.vy * cfg.particleSpeed;
 
-        // 중심으로의 약한 인력
+        // 중심으로의 약한 인력 (너무 가까우면 밀어냄)
         const dx = tc.x - p.x, dy = tc.y - p.y;
         const dist = Math.sqrt(dx * dx + dy * dy);
-        if (dist > 50) {
-          p.vx += dx / dist * 0.003 * cfg.particleSpeed;
-          p.vy += dy / dist * 0.003 * cfg.particleSpeed;
+        if (dist > 200) {
+          p.vx += dx / dist * 0.001 * cfg.particleSpeed;
+          p.vy += dy / dist * 0.001 * cfg.particleSpeed;
+        } else if (dist < 120) {
+          // 테서랙트 영역에서 밀어냄
+          p.vx -= dx / dist * 0.005;
+          p.vy -= dy / dist * 0.005;
         }
 
         // 감쇠
@@ -459,7 +463,7 @@ export default function CosmicBackground({ worldState, collapseProgress }: Props
       };
 
       const isMobile = w < 768;
-      const effScale = isMobile ? cfg.tessScale * 0.6 : cfg.tessScale;
+      const effScale = isMobile ? cfg.tessScale * 0.75 : cfg.tessScale;
 
       const proj: { x: number; y: number; d: number }[] = [];
       for (let i = 0; i < 16; i++) {
