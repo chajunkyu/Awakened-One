@@ -27,78 +27,78 @@ const CONFIGS: Record<WorldState, TesseractConfig> = {
   calm: {
     color: [80, 220, 140],
     glowColor: [60, 200, 120],
-    rotSpeed: 0.3,
+    rotSpeed: 0.15,
     distortion: 0,
-    scale: 90,
+    scale: 200,
     lineWidth: 1.5,
     glowIntensity: 0.4,
-    moveSpeed: 0.2,
-    moveRange: 0.03,
+    moveSpeed: 0,
+    moveRange: 0,
     innerBrightness: 0.3,
     edgeFlicker: 0,
   },
   ripple: {
     color: [100, 200, 180],
     glowColor: [80, 180, 160],
-    rotSpeed: 0.4,
+    rotSpeed: 0.2,
     distortion: 0.5,
-    scale: 95,
+    scale: 210,
     lineWidth: 1.8,
     glowIntensity: 0.5,
-    moveSpeed: 0.4,
-    moveRange: 0.05,
+    moveSpeed: 0,
+    moveRange: 0,
     innerBrightness: 0.35,
     edgeFlicker: 0.05,
   },
   tension: {
     color: [160, 120, 220],
     glowColor: [140, 80, 240],
-    rotSpeed: 0.6,
+    rotSpeed: 0.3,
     distortion: 1.5,
-    scale: 100,
+    scale: 220,
     lineWidth: 2.0,
     glowIntensity: 0.6,
-    moveSpeed: 0.7,
-    moveRange: 0.08,
+    moveSpeed: 0,
+    moveRange: 0,
     innerBrightness: 0.4,
     edgeFlicker: 0.1,
   },
   conflict: {
     color: [240, 100, 50],
     glowColor: [255, 60, 30],
-    rotSpeed: 1.0,
+    rotSpeed: 0.5,
     distortion: 3,
-    scale: 110,
+    scale: 230,
     lineWidth: 2.5,
     glowIntensity: 0.8,
-    moveSpeed: 1.5,
-    moveRange: 0.15,
+    moveSpeed: 0,
+    moveRange: 0,
     innerBrightness: 0.5,
     edgeFlicker: 0.2,
   },
   critical: {
     color: [255, 40, 40],
     glowColor: [255, 20, 20],
-    rotSpeed: 1.8,
+    rotSpeed: 0.8,
     distortion: 6,
-    scale: 120,
+    scale: 250,
     lineWidth: 3.0,
     glowIntensity: 1.0,
-    moveSpeed: 3.0,
-    moveRange: 0.25,
+    moveSpeed: 0,
+    moveRange: 0,
     innerBrightness: 0.7,
     edgeFlicker: 0.4,
   },
   collapse: {
     color: [255, 255, 255],
     glowColor: [255, 255, 255],
-    rotSpeed: 4.0,
+    rotSpeed: 2.0,
     distortion: 12,
-    scale: 140,
+    scale: 280,
     lineWidth: 4.0,
     glowIntensity: 1.0,
-    moveSpeed: 5.0,
-    moveRange: 0.4,
+    moveSpeed: 0,
+    moveRange: 0,
     innerBrightness: 1.0,
     edgeFlicker: 0.8,
   },
@@ -213,8 +213,6 @@ export default function AwakenedEntity({ worldState, collapseProgress }: Props) 
   const animRef = useRef<number>(0);
   const targetConfigRef = useRef<TesseractConfig>(CONFIGS[worldState]);
   const currentConfigRef = useRef<TesseractConfig>({ ...CONFIGS[worldState] });
-  const posRef = useRef({ x: 0.5, y: 0.45 });
-  const velRef = useRef({ x: 0, y: 0 });
 
   useEffect(() => {
     targetConfigRef.current = CONFIGS[worldState];
@@ -242,24 +240,13 @@ export default function AwakenedEntity({ worldState, collapseProgress }: Props) 
       const h = canvas.height;
       time += 0.016;
 
-      // 부드럽게 설정 전환
-      currentConfigRef.current = lerpConfig(currentConfigRef.current, targetConfigRef.current, 0.02);
+      // 부드럽게 설정 전환 (느리게: 0.008)
+      currentConfigRef.current = lerpConfig(currentConfigRef.current, targetConfigRef.current, 0.008);
       const cfg = currentConfigRef.current;
 
-      // ── 위치 업데이트 ──
-      const pos = posRef.current;
-      const vel = velRef.current;
-      vel.x += (Math.random() - 0.5) * cfg.moveSpeed * 0.002;
-      vel.y += (Math.random() - 0.5) * cfg.moveSpeed * 0.002;
-      vel.x += (0.5 - pos.x) * 0.003;
-      vel.y += (0.45 - pos.y) * 0.003;
-      vel.x *= 0.98;
-      vel.y *= 0.98;
-      pos.x = Math.max(0.5 - cfg.moveRange, Math.min(0.5 + cfg.moveRange, pos.x + vel.x));
-      pos.y = Math.max(0.45 - cfg.moveRange, Math.min(0.45 + cfg.moveRange, pos.y + vel.y));
-
-      const cx = pos.x * w;
-      const cy = pos.y * h;
+      // 화면 중앙 고정
+      const cx = w * 0.5;
+      const cy = h * 0.45;
 
       // ── 클리어 ──
       ctx.clearRect(0, 0, w, h);

@@ -92,6 +92,7 @@ export default function StatusBar({ worldState, collapseProgress, activation, tu
           </div>
 
           <span className="text-[10px] text-white/15">{turnCount}</span>
+          <span className="text-[9px] text-white/10 tracking-wider">v{process.env.APP_VERSION}</span>
         </div>
       </div>
     </div>
