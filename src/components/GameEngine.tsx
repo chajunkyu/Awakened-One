@@ -12,8 +12,7 @@ import {
   countActiveSages,
 } from "@/lib/engine";
 import { AmbientEngine } from "@/lib/audio";
-import WorldBackground from "./WorldBackground";
-import AwakenedEntity from "./AwakenedEntity";
+import CosmicBackground from "./CosmicBackground";
 import StatusBar from "./StatusBar";
 import ChatInterface from "./ChatInterface";
 import IntroSequence from "./IntroSequence";
@@ -250,19 +249,11 @@ export default function GameEngine() {
 
   return (
     <div className="h-screen flex flex-col relative">
-      {/* Dynamic Background */}
-      <WorldBackground
+      {/* 배경 + 파티클 네트워크 + 테서랙트 통합 */}
+      <CosmicBackground
         worldState={gameState.worldState}
         collapseProgress={gameState.collapseProgress}
       />
-
-      {/* 깨어난 자 — 초자아 엔티티 */}
-      {!showIntro && gameState.phase !== "post" && (
-        <AwakenedEntity
-          worldState={gameState.worldState}
-          collapseProgress={gameState.collapseProgress}
-        />
-      )}
 
       {/* Intro */}
       {showIntro && <IntroSequence onComplete={handleIntroComplete} />}
