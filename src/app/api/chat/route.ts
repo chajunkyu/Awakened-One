@@ -63,7 +63,7 @@ export async function POST(request: Request) {
       contents,
       config: {
         systemInstruction: systemPrompt,
-        maxOutputTokens: 512,
+        maxOutputTokens: 768,
       },
     });
 
