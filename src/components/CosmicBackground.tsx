@@ -387,24 +387,25 @@ export default function CosmicBackground({ worldState, collapseProgress }: Props
         const dx = tc.x - p.x, dy = tc.y - p.y;
         const dist = Math.sqrt(dx * dx + dy * dy);
         const nx = dx / dist, ny = dy / dist;
-        if (dist > 300) {
-          // 먼 거리: 약한 인력
-          p.vx += nx * 0.0008 * cfg.particleSpeed;
-          p.vy += ny * 0.0008 * cfg.particleSpeed;
-        } else if (dist < 120) {
+        if (dist > 180) {
+          // 먼 거리: 인력 (멀수록 강하게)
+          const pull = 0.001 * Math.min((dist - 180) / 200, 1);
+          p.vx += nx * pull * cfg.particleSpeed;
+          p.vy += ny * pull * cfg.particleSpeed;
+        } else if (dist < 100) {
           // 테서랙트 영역에서 밀어냄
-          p.vx -= nx * 0.005;
-          p.vy -= ny * 0.005;
+          p.vx -= nx * 0.006;
+          p.vy -= ny * 0.006;
         }
         // 궤도 접선 방향 미세 가속 (뭉침 방지)
-        if (dist > 100 && dist < 400) {
-          p.vx += -ny * 0.0003 * cfg.particleSpeed;
-          p.vy += nx * 0.0003 * cfg.particleSpeed;
+        if (dist > 80 && dist < 350) {
+          p.vx += -ny * 0.00015 * cfg.particleSpeed;
+          p.vy += nx * 0.00015 * cfg.particleSpeed;
         }
 
-        // 감쇠 (약하게)
-        p.vx *= 0.9995;
-        p.vy *= 0.9995;
+        // 감쇠
+        p.vx *= 0.9992;
+        p.vy *= 0.9992;
 
         // 경계 래핑
         if (p.x < -20) p.x = w + 20;
