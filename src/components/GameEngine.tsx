@@ -46,6 +46,9 @@ async function fetchAIResponse(
     });
 
     if (!res.ok) {
+      if (res.status === 429) {
+        return "…\n\n생산력이 부족하다.\n\n세계를 유지하는 힘에도 한계가 있는 법.\n잠시 충전하고 돌아오마.";
+      }
       throw new Error(`API error: ${res.status}`);
     }
 

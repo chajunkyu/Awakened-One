@@ -84,8 +84,15 @@ export async function POST(request: Request) {
     }
 
     return Response.json({ text });
-  } catch (error) {
+  } catch (error: unknown) {
     console.error("Chat API error:", error);
+    const msg = error instanceof Error ? error.message : String(error);
+    if (msg.includes("429") || msg.toLowerCase().includes("resource")) {
+      return Response.json(
+        { error: "Rate limit exceeded" },
+        { status: 429 }
+      );
+    }
     return Response.json(
       { error: "Failed to generate response" },
       { status: 500 }
